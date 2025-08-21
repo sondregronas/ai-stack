@@ -1,0 +1,73 @@
+x-gpu-reservation: &gpu_reservation
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities:
+              - gpu
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    ports:
+      - ${PORT_OPENWEBUI:-3000}:8080
+    env_file:
+      - open-webui/open-webui.env
+      - open-webui/comfy-workflow.env
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}
+      - COMFYUI_BASE_URL=http://host.docker.internal:${PORT_COMFYUI:-8188}
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://host.docker.internal:${PORT_KOKORO:-8880}/v1
+      - TZ=${TZ-Europe/Oslo}
+    restart: unless-stopped
+    <<: *gpu_reservation
+
+  ollama:
+    image: ollama/ollama
+    restart: unless-stopped
+    container_name: ollama
+    ports:
+      - ${PORT_OLLAMA:-11434}:11434
+    volumes:
+      - ./data/ollama:/root/.ollama
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS}
+      - TZ=${TZ-Europe/Oslo}
+    <<: *gpu_reservation
+
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
+    container_name: kokoro-tts
+    volumes:
+      - ./data/kokoro-tts:/app/api/src/models
+    user: "root"
+    ports:
+      - ${PORT_KOKORO:-8880}:8880
+    environment:
+      - PYTHONPATH=/app:/app/api
+      - USE_GPU=true
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ-Europe/Oslo}
+    restart: unless-stopped
+    <<: *gpu_reservation
+
+  comfyui:
+    container_name: comfyui
+    image: frefrik/comfyui-flux:latest
+    restart: unless-stopped
+    ports:
+      - ${PORT_COMFYUI:-8188}:8188
+    volumes:
+      - ./data/comfyui:/app
+    env_file: comfy/comfy.env
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - TZ=${TZ-Europe/Oslo}
+    <<: *gpu_reservation
