@@ -7,11 +7,13 @@ services - this is probably not suitable for everyone, but it's just a starting 
 - ComfyUI with FLUX.1-dev for image generation
 - Ollama for LLMs
 - Open WebUI for the interface
-- Uses DuckDuckGo for search with Playwright
+- DuckDuckGo for web search
 
 Some of the images might need a little bit of tweaking depending on your hardware, and some admin panel settings in Open
 WebUI might need to be adjusted. ComfyUI needs a bit of configuration to get working (importing the model, setting up,
 etc.)
+
+> **NOTE:** GPU inference on Blackwell GPU for ComfyUI is not working correctly with the docker image as-is.
 
 ## Setup
 

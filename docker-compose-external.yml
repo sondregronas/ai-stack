@@ -29,7 +29,7 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       - COMFYUI_BASE_URL=http://comfyui:8188
       - AUDIO_TTS_OPENAI_API_BASE_URL=http://kokoro-tts:8880/v1
-      - PLAYWRIGHT_WS_URL=ws://playwright:9323
+      # - PLAYWRIGHT_WS_URL=ws://playwright:9323
 
   ollama:
     <<: [ *common, *gpu_reservation ]
@@ -50,6 +50,8 @@ services:
     container_name: kokoro-tts
     volumes:
       - ./data/kokoro-tts:/app/api/src/models
+      - ./kokoro/entrypoint.sh:/app/entrypoint.sh
+    command: sh entrypoint.sh
     user: "root"
     ports:
       - ${PORT_KOKORO:-8880}:8880
@@ -61,7 +63,7 @@ services:
   comfyui:
     <<: [ *common, *gpu_reservation ]
     container_name: comfyui
-    image: ghcr.io/arsac/comfyui-flux:latest
+    image: frefrik/comfyui-flux:cu128
     ports:
       - ${PORT_COMFYUI:-8188}:8188
     volumes:
@@ -70,9 +72,10 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN}
 
-  playwright:
-    <<: *common
-    image: mcr.microsoft.com/playwright:latest
-    container_name: playwright
-    ports:
-      - ${PORT_PLAYWRIGHT:-9323}:9323
+    #  playwright:
+    #    <<: *common
+    #    image: mcr.microsoft.com/playwright
+    #    container_name: playwright
+    #    command: npx -y playwright@1.55.0 run-server --port 9323 --host 0.0.0.0
+    # ports:
+    #   - ${PORT_PLAYWRIGHT:-9323}:9323
