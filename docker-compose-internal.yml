@@ -1,3 +1,5 @@
+# This configuration only exposes OpenWebUI to the host machine.
+
 x-gpu-reservation: &gpu_reservation
   deploy:
     resources:
@@ -7,6 +9,10 @@ x-gpu-reservation: &gpu_reservation
             count: all
             capabilities:
               - gpu
+
+networks:
+  ai-network:
+    driver: bridge
 
 services:
   open-webui:
@@ -26,14 +32,14 @@ services:
       - PLAYWRIGHT_WS_URL=ws://playwright:9323
       - TZ=${TZ:-Europe/Oslo}
     restart: unless-stopped
+    networks:
+      - ai-network
     <<: *gpu_reservation
 
   ollama:
     image: ollama/ollama
     restart: unless-stopped
     container_name: ollama
-    ports:
-      - ${PORT_OLLAMA:-11434}:11434
     volumes:
       - ./data/ollama:/root/.ollama
     environment:
@@ -41,6 +47,8 @@ services:
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
       - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
       - TZ=${TZ:-Europe/Oslo}
+    networks:
+      - ai-network
     <<: *gpu_reservation
 
   kokoro-tts:
@@ -49,33 +57,33 @@ services:
     volumes:
       - ./data/kokoro-tts:/app/api/src/models
     user: "root"
-    ports:
-      - ${PORT_KOKORO:-8880}:8880
     environment:
       - PYTHONPATH=/app:/app/api
       - USE_GPU=true
       - PYTHONUNBUFFERED=1
       - TZ=${TZ:-Europe/Oslo}
     restart: unless-stopped
+    networks:
+      - ai-network
     <<: *gpu_reservation
 
   comfyui:
     container_name: comfyui
     image: ghcr.io/arsac/comfyui-flux:latest
     restart: unless-stopped
-    ports:
-      - ${PORT_COMFYUI:-8188}:8188
     volumes:
       - ./data/comfyui:/app
     env_file: comfy/comfy.env
     environment:
       - HF_TOKEN=${HF_TOKEN}
       - TZ=${TZ:-Europe/Oslo}
+    networks:
+      - ai-network
     <<: *gpu_reservation
 
   playwright:
     image: mcr.microsoft.com/playwright:latest
     container_name: playwright
-    ports:
-      - ${PORT_PLAYWRIGHT:-9323}:9323
     restart: unless-stopped
+    networks:
+      - ai-network
