@@ -7,10 +7,11 @@ services - this is probably not suitable for everyone, but it's just a starting 
 - ComfyUI with FLUX.1-dev for image generation
 - Ollama for LLMs
 - Open WebUI for the interface
-- Uses DuckDuckGo for search
+- Uses DuckDuckGo for search with Playwright
 
 Some of the images might need a little bit of tweaking depending on your hardware, and some admin panel settings in Open
-WebUI might need to be adjusted (ComfyUI needs to be altered to fit the workflow). Your mileage may vary.
+WebUI might need to be adjusted. ComfyUI needs a bit of configuration to get working (importing the model, setting up,
+etc.)
 
 ## Ports
 
@@ -22,6 +23,7 @@ PORT_OLLAMA=11434  # Ollama API
 PORT_KOKORO=8880  # Swagger found at /docs
 PORT_COMFYUI=8188  # ComfyUI web interface
 PORT_OPENWEBUI=3000  # Open WebUI interface (the main attraction)
+PORT_PLAYWRIGHT=9323  # Playwright Web Loader
 ```
 
 ## Todo

@@ -20,10 +20,11 @@ services:
       - open-webui/open-webui.env
       - open-webui/comfy-workflow.env
     environment:
-      - OLLAMA_BASE_URL=http://host.docker.internal:${PORT_OLLAMA:-11434}
-      - COMFYUI_BASE_URL=http://host.docker.internal:${PORT_COMFYUI:-8188}
-      - AUDIO_TTS_OPENAI_API_BASE_URL=http://host.docker.internal:${PORT_KOKORO:-8880}/v1
-      - TZ=${TZ-Europe/Oslo}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - COMFYUI_BASE_URL=http://comfyui:8188
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://kokoro-tts:8880/v1
+      - PLAYWRIGHT_WS_URL=ws://playwright:9323
+      - TZ=${TZ:-Europe/Oslo}
     restart: unless-stopped
     <<: *gpu_reservation
 
@@ -38,8 +39,8 @@ services:
     environment:
       - DEBIAN_FRONTEND=noninteractive
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
-      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS}
-      - TZ=${TZ-Europe/Oslo}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
+      - TZ=${TZ:-Europe/Oslo}
     <<: *gpu_reservation
 
   kokoro-tts:
@@ -54,13 +55,13 @@ services:
       - PYTHONPATH=/app:/app/api
       - USE_GPU=true
       - PYTHONUNBUFFERED=1
-      - TZ=${TZ-Europe/Oslo}
+      - TZ=${TZ:-Europe/Oslo}
     restart: unless-stopped
     <<: *gpu_reservation
 
   comfyui:
     container_name: comfyui
-    image: frefrik/comfyui-flux:latest
+    image: ghcr.io/arsac/comfyui-flux:latest
     restart: unless-stopped
     ports:
       - ${PORT_COMFYUI:-8188}:8188
@@ -69,5 +70,12 @@ services:
     env_file: comfy/comfy.env
     environment:
       - HF_TOKEN=${HF_TOKEN}
-      - TZ=${TZ-Europe/Oslo}
+      - TZ=${TZ:-Europe/Oslo}
     <<: *gpu_reservation
+
+  playwright:
+    image: mcr.microsoft.com/playwright:latest
+    container_name: playwright
+    ports:
+      - ${PORT_PLAYWRIGHT:-9323}:9323
+    restart: unless-stopped
