@@ -2,9 +2,12 @@
 set -e
 
 # Blackwell / Cuda 12.9 setup
-python -m ensurepip --default-pip
-python -m pip uninstall -y torch
-python -m pip install --upgrade torch --index-url https://download.pytorch.org/whl/cu129 --no-input
+if [ ! -f "/tmp/cu129-installed" ]; then
+  python -m ensurepip --default-pip
+  python -m pip uninstall -y torch
+  python -m pip install --upgrade torch --index-url https://download.pytorch.org/whl/cu129 --no-input
+  touch /tmp/cu129-installed
+fi
 
 if [ "$DOWNLOAD_MODEL" = "true" ]; then
     python download_model.py --output api/src/models/v1_0
