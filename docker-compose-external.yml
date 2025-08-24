@@ -1,3 +1,8 @@
+x-common: &common
+  restart: unless-stopped
+  environment:
+    - TZ=${TZ:-Europe/Oslo}
+
 x-gpu-reservation: &gpu_reservation
   deploy:
     resources:
@@ -10,6 +15,7 @@ x-gpu-reservation: &gpu_reservation
 
 services:
   open-webui:
+    <<: [ *common, *gpu_reservation ]
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     volumes:
@@ -24,13 +30,10 @@ services:
       - COMFYUI_BASE_URL=http://comfyui:8188
       - AUDIO_TTS_OPENAI_API_BASE_URL=http://kokoro-tts:8880/v1
       - PLAYWRIGHT_WS_URL=ws://playwright:9323
-      - TZ=${TZ:-Europe/Oslo}
-    restart: unless-stopped
-    <<: *gpu_reservation
 
   ollama:
+    <<: [ *common, *gpu_reservation ]
     image: ollama/ollama
-    restart: unless-stopped
     container_name: ollama
     ports:
       - ${PORT_OLLAMA:-11434}:11434
@@ -40,10 +43,9 @@ services:
       - DEBIAN_FRONTEND=noninteractive
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
       - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
-      - TZ=${TZ:-Europe/Oslo}
-    <<: *gpu_reservation
 
   kokoro-tts:
+    <<: [ *common, *gpu_reservation ]
     image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
     container_name: kokoro-tts
     volumes:
@@ -55,14 +57,11 @@ services:
       - PYTHONPATH=/app:/app/api
       - USE_GPU=true
       - PYTHONUNBUFFERED=1
-      - TZ=${TZ:-Europe/Oslo}
-    restart: unless-stopped
-    <<: *gpu_reservation
 
   comfyui:
+    <<: [ *common, *gpu_reservation ]
     container_name: comfyui
     image: ghcr.io/arsac/comfyui-flux:latest
-    restart: unless-stopped
     ports:
       - ${PORT_COMFYUI:-8188}:8188
     volumes:
@@ -70,12 +69,10 @@ services:
     env_file: comfy/comfy.env
     environment:
       - HF_TOKEN=${HF_TOKEN}
-      - TZ=${TZ:-Europe/Oslo}
-    <<: *gpu_reservation
 
   playwright:
+    <<: *common
     image: mcr.microsoft.com/playwright:latest
     container_name: playwright
     ports:
       - ${PORT_PLAYWRIGHT:-9323}:9323
-    restart: unless-stopped

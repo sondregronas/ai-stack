@@ -1,4 +1,12 @@
 # This configuration only exposes OpenWebUI to the host machine.
+# You can easily expose more services by uncommenting the ports section for each service.
+
+x-common: &common
+  restart: unless-stopped
+  environment:
+    - TZ=${TZ:-Europe/Oslo}
+  networks:
+    - ai-network
 
 x-gpu-reservation: &gpu_reservation
   deploy:
@@ -16,6 +24,7 @@ networks:
 
 services:
   open-webui:
+    <<: [ *common, *gpu_reservation ]
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     volumes:
@@ -30,60 +39,49 @@ services:
       - COMFYUI_BASE_URL=http://comfyui:8188
       - AUDIO_TTS_OPENAI_API_BASE_URL=http://kokoro-tts:8880/v1
       - PLAYWRIGHT_WS_URL=ws://playwright:9323
-      - TZ=${TZ:-Europe/Oslo}
-    restart: unless-stopped
-    networks:
-      - ai-network
-    <<: *gpu_reservation
 
   ollama:
+    <<: [ *common, *gpu_reservation ]
     image: ollama/ollama
-    restart: unless-stopped
     container_name: ollama
     volumes:
       - ./data/ollama:/root/.ollama
+    # ports:
+    #   - "${PORT_OLLAMA:-11434}:11434"
     environment:
       - DEBIAN_FRONTEND=noninteractive
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
       - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
-      - TZ=${TZ:-Europe/Oslo}
-    networks:
-      - ai-network
-    <<: *gpu_reservation
 
   kokoro-tts:
+    <<: [ *common, *gpu_reservation ]
     image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
     container_name: kokoro-tts
     volumes:
       - ./data/kokoro-tts:/app/api/src/models
     user: "root"
+    # ports:
+    #   - "${PORT_KOKORO:-8880}:8880"
     environment:
       - PYTHONPATH=/app:/app/api
       - USE_GPU=true
       - PYTHONUNBUFFERED=1
-      - TZ=${TZ:-Europe/Oslo}
-    restart: unless-stopped
-    networks:
-      - ai-network
-    <<: *gpu_reservation
 
   comfyui:
+    <<: [ *common, *gpu_reservation ]
     container_name: comfyui
     image: ghcr.io/arsac/comfyui-flux:latest
-    restart: unless-stopped
     volumes:
       - ./data/comfyui:/app
     env_file: comfy/comfy.env
+    # ports:
+    #   - "${PORT_COMFYUI:-8188}:8188"
     environment:
       - HF_TOKEN=${HF_TOKEN}
-      - TZ=${TZ:-Europe/Oslo}
-    networks:
-      - ai-network
-    <<: *gpu_reservation
 
   playwright:
+    <<: *common
     image: mcr.microsoft.com/playwright:latest
     container_name: playwright
-    restart: unless-stopped
-    networks:
-      - ai-network
+    # ports:
+    #   - "${PORT_PLAYWRIGHT:-9323}:9323"

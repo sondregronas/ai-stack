@@ -13,6 +13,21 @@ Some of the images might need a little bit of tweaking depending on your hardwar
 WebUI might need to be adjusted. ComfyUI needs a bit of configuration to get working (importing the model, setting up,
 etc.)
 
+## Setup
+
+```bash
+git clone https://github.com/sondregronas/ai-stack
+cp example.env .env
+```
+
+Modify the `.env` file before proceeding
+
+```bash
+cp docker-compose-external.yml docker-compose.yml  # Or docker-compose-internal.yml
+docker compose up -d
+sh comfyui-post-setup.sh  # Optional
+```
+
 ## Ports
 
 Every service gets exposed on the host by default (not just only internal Docker networking), so you can access them
