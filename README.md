@@ -4,7 +4,7 @@ Just a docker compose file and environment variables/settings to run a local AI 
 services - this is probably not suitable for everyone, but it's just a starting point for our use case.
 
 - FastKoro (Kokoro) for TTS
-- ComfyUI with FLUX.1-dev for image generation
+- ~~ComfyUI with FLUX.1-dev for image generation~~
 - Ollama for LLMs
 - Open WebUI for the interface
 - DuckDuckGo for web search
@@ -13,7 +13,7 @@ Some of the images might need a little bit of tweaking depending on your hardwar
 WebUI might need to be adjusted. ComfyUI needs a bit of configuration to get working (importing the model, setting up,
 etc.)
 
-> **NOTE:** GPU inference on Blackwell GPU for ComfyUI is not working correctly with the docker image as-is.
+> **NOTE:** The ComfyUI image does not work with Blackwell / Cuda129 as-is.
 
 ## Setup
 
@@ -32,16 +32,16 @@ sh comfyui-post-setup.sh  # Optional
 
 ## Ports
 
-Every service gets exposed on the host by default (not just only internal Docker networking), so you can access them
-from your browser or other applications. You should only need to proxy Open WebUI The ports are as follows:
+Using `docker-compose-external.yml` will expose the following ports to the host machine:
 
 ```bash
 PORT_OLLAMA=11434  # Ollama API
 PORT_KOKORO=8880  # Swagger found at /docs
 PORT_COMFYUI=8188  # ComfyUI web interface
 PORT_OPENWEBUI=3000  # Open WebUI interface (the main attraction)
-PORT_PLAYWRIGHT=9323  # Playwright Web Loader
 ```
+
+Internal will only expose Open WebUI on port 3000.
 
 ## Todo
 

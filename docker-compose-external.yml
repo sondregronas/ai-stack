@@ -76,6 +76,6 @@ services:
     #    <<: *common
     #    image: mcr.microsoft.com/playwright
     #    container_name: playwright
-    #    command: npx -y playwright@1.55.0 run-server --port 9323 --host 0.0.0.0
+    #    command: npx -y playwright run-server --port 9323 --host 0.0.0.0
     # ports:
     #   - ${PORT_PLAYWRIGHT:-9323}:9323
