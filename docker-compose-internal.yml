@@ -1,0 +1,89 @@
+# This configuration only exposes OpenWebUI to the host machine.
+
+x-gpu-reservation: &gpu_reservation
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities:
+              - gpu
+
+networks:
+  ai-network:
+    driver: bridge
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    ports:
+      - ${PORT_OPENWEBUI:-3000}:8080
+    env_file:
+      - open-webui/open-webui.env
+      - open-webui/comfy-workflow.env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - COMFYUI_BASE_URL=http://comfyui:8188
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://kokoro-tts:8880/v1
+      - PLAYWRIGHT_WS_URL=ws://playwright:9323
+      - TZ=${TZ:-Europe/Oslo}
+    restart: unless-stopped
+    networks:
+      - ai-network
+    <<: *gpu_reservation
+
+  ollama:
+    image: ollama/ollama
+    restart: unless-stopped
+    container_name: ollama
+    volumes:
+      - ./data/ollama:/root/.ollama
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
+      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
+      - TZ=${TZ:-Europe/Oslo}
+    networks:
+      - ai-network
+    <<: *gpu_reservation
+
+  kokoro-tts:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
+    container_name: kokoro-tts
+    volumes:
+      - ./data/kokoro-tts:/app/api/src/models
+    user: "root"
+    environment:
+      - PYTHONPATH=/app:/app/api
+      - USE_GPU=true
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ:-Europe/Oslo}
+    restart: unless-stopped
+    networks:
+      - ai-network
+    <<: *gpu_reservation
+
+  comfyui:
+    container_name: comfyui
+    image: ghcr.io/arsac/comfyui-flux:latest
+    restart: unless-stopped
+    volumes:
+      - ./data/comfyui:/app
+    env_file: comfy/comfy.env
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - TZ=${TZ:-Europe/Oslo}
+    networks:
+      - ai-network
+    <<: *gpu_reservation
+
+  playwright:
+    image: mcr.microsoft.com/playwright:latest
+    container_name: playwright
+    restart: unless-stopped
+    networks:
+      - ai-network
