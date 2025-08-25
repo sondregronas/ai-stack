@@ -41,8 +41,9 @@ services:
       - ./data/ollama:/root/.ollama
     environment:
       - DEBIAN_FRONTEND=noninteractive
-      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
-      - OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
+      # These variables might force Ollama to run in CPU only, depending on hardware. Test and uncomment if needed.
+      #- OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-20}
+      #- OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-""}
 
   kokoro-tts:
     <<: [ *common, *gpu_reservation ]
